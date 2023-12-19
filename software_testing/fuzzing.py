@@ -1,6 +1,7 @@
 import imgaug.augmenters as iaa
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Fuzzing:
@@ -41,12 +42,35 @@ class Fuzzing:
                                   blur_sigma_fraction=0.0005)
         return aug.augment(images=imgs)
 
+    # gamma transformation
+    def gamma_transformation(self, imgs, gamma):
+        ret = []
+        for img in imgs:
+            img -= img.min()
+            img = img / (img.max() - img.min())
+            img = np.power(img, gamma) * 255
+            img = np.uint8(img)
+            ret.append(img)
+        return ret
+
+    def add_brightness(self, imgs, brightness_coefficient):
+        ret = []
+        for img in imgs:
+            img_hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+            img_hls = np.array(img_hls, dtype=np.float64)
+            img_hls[:, :, 1] = img_hls[:, :, 1] * brightness_coefficient
+            img_hls[:, :, 1][img_hls[:, :, 1] > 255] = 255
+            img_hls = np.array(img_hls, dtype=np.uint8)
+            img_rgb = cv2.cvtColor(img_hls, cv2.COLOR_HLS2RGB)
+            ret.append(img_rgb)
+        return ret
+
 
 if __name__ == "__main__":
     # demo fuzzing
     filepath = '../data/leftImg8bit_trainvaltest/leftImg8bit/val/munster/munster_000000_000019_leftImg8bit.png'
     img = cv2.imread(filepath)
     fuzzier = Fuzzing()
-    img = fuzzier.add_snowlandscape([img])
+    img = fuzzier.add_brightness([img], 1.5)
     plt.imshow(img[0])
     plt.show()
