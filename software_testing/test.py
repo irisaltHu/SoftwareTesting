@@ -7,6 +7,7 @@ import cv2
 from mmengine.structures import PixelData
 from mmseg.datasets import cityscapes
 from mmseg.evaluation.metrics import iou_metric
+import metrics
 
 
 class_map = {7: 0, 8: 1, 11: 2, 12: 3, 13: 4, 17: 5, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12,
@@ -29,7 +30,7 @@ def main():
     for folder_name in folder_names:
         file_path = data_path + folder_name
         filenames = os.listdir(file_path)
-        batch_size = 4
+        batch_size = 1
 
         # test using batch
         for i in range(0, int(len(filenames) / batch_size), batch_size):
@@ -61,17 +62,27 @@ def main():
                 gt = torch.Tensor(gt)
                 results[j].gt_sem_seg = PixelData(data=gt)
 
-            # metric from mmseg
-            metric = iou_metric.IoUMetric()
+            metric = metrics.Metrics()
             metric.dataset_meta = dict(
                     classes=[item for item in classes],
                     label_map=dict(),
                     reduce_zero_label=False
                 )
+            metric.process([0] * len(results), [result.to_dict() for result in results])
+            output = metric.compute_iou(metric.results)
+            output = metric.compute_difference(output, output - 1)
+
+            # metric from mmseg
+            # metric = iou_metric.IoUMetric()
+            # metric.dataset_meta = dict(
+            #         classes=[item for item in classes],
+            #         label_map=dict(),
+            #         reduce_zero_label=False
+            #     )
 
             # compute IoU and Acc
-            metric.process([0] * len(results), [result.to_dict() for result in results])
-            output = metric.compute_metrics(metric.results)
+            # metric.process([0] * len(results), [result.to_dict() for result in results])
+            # output = metric.compute_metrics(metric.results)
 
             # visualization of the inference results
             # for result in results:
