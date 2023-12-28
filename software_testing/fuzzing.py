@@ -6,7 +6,7 @@ import numpy as np
 
 class Fuzzer:
     def __init__(self):
-        self.name = 'fuzzy test.'
+        self.name = 'fuzzer.'
 
     def add_cloud(self, imgs):
         aug = iaa.Clouds()
