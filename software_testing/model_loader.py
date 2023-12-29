@@ -80,5 +80,5 @@ class Models:
                     output = metric.compute_iou(metric.results)
                     output = metric.compute_difference(output, output - 1)
 
-                    print(output)
+                    return output
 

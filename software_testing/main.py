@@ -9,7 +9,8 @@ def main():
     models = Models(data_path=data_path, label_path=label_path)
     models.append_model(config_path, checkpoint_path)
     models.append_model(config_path, checkpoint_path)
-    models.traverse(batch_size=2)
+    outputs = models.traverse(batch_size=2)
+    print(outputs)
 
 
 if __name__ == "__main__":
