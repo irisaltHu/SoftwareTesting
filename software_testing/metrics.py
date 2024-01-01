@@ -4,6 +4,12 @@ from typing import Dict
 from mmseg.evaluation.metrics.iou_metric import IoUMetric
 
 
+def compute_difference(original_iou, new_iou):
+    increment = new_iou - original_iou
+    increment_percentage = increment / original_iou
+    return {'increment': increment, 'increment_percentage': increment_percentage}
+
+
 class Metrics(IoUMetric):
     def __init__(self, **kwargs):
         super(Metrics, self).__init__()
@@ -27,9 +33,4 @@ class Metrics(IoUMetric):
         })
 
         return ret_metrics_class['IoU']
-
-    def compute_difference(self, original_iou, new_iou):
-        increment = new_iou - original_iou
-        increment_percentage = increment / original_iou
-        return {'increment': increment, 'increment_percentage': increment_percentage}
 
