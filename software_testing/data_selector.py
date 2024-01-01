@@ -20,11 +20,20 @@ class DataSelector:
         self.data_path = data_path
         self.label_path = label_path
         self.out_path = out_path
-        self.top_k = top_k
+        self.top_k = top_k  # only choose the most useful k mutations
         self.mutation_map = mutation_map
         self.use_increment = use_increment
 
     def select(self, models):
+        """
+
+        Args:
+            models: Model type which contains multiple or single model
+
+        Returns:
+            null, save the chosen mutations directly
+
+        """
         folder_names = os.listdir(self.data_path)
         for folder_name in folder_names:
             file_path = self.data_path + folder_name + '/'

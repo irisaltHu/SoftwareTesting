@@ -14,6 +14,7 @@ class Models:
                  class_map=None,
                  label_map=cityscapes.CityscapesDataset.METAINFO,
                  ):
+        # choose the main 19 classes of cityscapes dataset
         if class_map is None:
             class_map = {7: 0, 8: 1, 11: 2, 12: 3, 13: 4, 17: 5, 19: 6, 20: 7, 21: 8, 22: 9, 23: 10, 24: 11, 25: 12,
                          26: 13, 27: 14, 28: 15, 31: 16, 32: 17, 33: 18}
@@ -26,6 +27,7 @@ class Models:
 
         self.models = []
 
+    # add a new model
     def append_model(self, config_path, checkpoint_path):
         model = init_model(config_path, checkpoint_path)
         self.models.append(model)
@@ -53,6 +55,15 @@ class Models:
         return ret
 
     def load_label(self, label_paths):
+        """
+
+        Args:
+            label_paths: a list of paths of target label images
+
+        Returns:
+            a list of ground truth
+
+        """
         labels = []
         for i in range(len(label_paths)):
             label = cv2.imread(label_paths[i])
@@ -72,6 +83,16 @@ class Models:
         return labels
 
     def traverse(self, top_k):
+        """
+        Usage:
+            traverse the test dataset and print the metrics which judge the test dataset and model
+        Args:
+            top_k: number of mutations chosen in selection
+
+        Returns:
+            null, print the metrics directly
+
+        """
         folder_names = os.listdir(self.data_path)
 
         for folder_name in folder_names:

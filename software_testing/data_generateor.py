@@ -27,6 +27,7 @@ class DataGenerator:
             target_filenames = [file_path + '/' + filenames[index] for index in indices]
 
             for i in range(len(target_filenames)):
+                # carry out mutations
                 print('generate mutaion data of ' + target_filenames[i])
                 img = cv2.imread(target_filenames[i])
                 cv2.imwrite(self.out_path + folder_name + '/' + filenames[indices[i]], img)

@@ -5,6 +5,18 @@ from mmseg.evaluation.metrics.iou_metric import IoUMetric
 
 
 def compute_difference(original_iou, new_iou):
+    """
+    Usage:
+        compute the difference between two ious
+
+    Args:
+        original_iou: iou computed by metrics
+        new_iou: iou computed by metrics
+
+    Returns:
+        a dict of the increment and percentage between original_iou and new_iou
+
+    """
     increment = new_iou - original_iou
     increment_percentage = increment / original_iou
     return {'increment': increment, 'increment_percentage': increment_percentage}
@@ -14,6 +26,7 @@ class Metrics(IoUMetric):
     def __init__(self, **kwargs):
         super(Metrics, self).__init__()
 
+    # compute the iou(refers to IoUMetric)
     def compute_iou(self, results: list) -> Dict[str, float]:
         results = tuple(zip(*results))
         assert len(results) == 4

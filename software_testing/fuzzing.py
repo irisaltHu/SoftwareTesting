@@ -5,10 +5,15 @@ import numpy as np
 
 
 class Fuzzer:
-    def __init__(self):
-        self.name = 'fuzzer.'
-
     def add_cloud(self, imgs):
+        """
+        This works for every method in class Fuzzer
+        Args:
+            imgs: a list of images(ndarray)
+
+        Returns:
+            a list of the mutations(ndarray)
+        """
         aug = iaa.Clouds()
         return aug.augment(images=imgs)
 
@@ -64,13 +69,3 @@ class Fuzzer:
             img_rgb = cv2.cvtColor(img_hls, cv2.COLOR_HLS2RGB)
             ret.append(img_rgb)
         return ret
-
-
-if __name__ == "__main__":
-    # demo fuzzing
-    filepath = '../data/leftImg8bit_trainvaltest/leftImg8bit/val/munster/munster_000000_000019_leftImg8bit.png'
-    img = cv2.imread(filepath)
-    fuzzier = Fuzzer()
-    img = fuzzier.add_brightness([img], 1.5)
-    plt.imshow(img[0])
-    plt.show()
