@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from mmseg.apis import init_model, inference_model
 import os
@@ -11,6 +12,7 @@ class Models:
     def __init__(self,
                  data_path,
                  label_path,
+                 out_path,
                  class_map=None,
                  label_map=cityscapes.CityscapesDataset.METAINFO,
                  ):
@@ -23,6 +25,7 @@ class Models:
         self.label_path = label_path
         self.class_map = class_map
         self.label_map = label_map
+        self.out_path = out_path
         self.classes = label_map['classes']
 
         self.models = []
@@ -99,12 +102,17 @@ class Models:
             file_path = self.data_path + folder_name + '/'
             filenames = os.listdir(file_path)
 
+            results0 = [[0 for _ in range(len(self.classes))] for _ in range(len(self.models))]
+            results1 = [[0 for _ in range(len(self.classes))] for _ in range(len(self.models))]
+            total = [[0 for _ in range(len(self.classes))] for _ in range(len(self.models))]
+
             for i in range(len(filenames)):
                 if not filenames[i].endswith('8bit.png'):
                     continue
+                print('-----------------------------------------------------------------------')
                 print('test on ' + filenames[i] + ' and its mutations')
                 img_paths = []
-                for j in range(top_k):
+                for j in range(int(top_k * (top_k + 1) / 2)):
                     img_paths.append(filenames[i][:-4] + '_mutation' + str(j) + '.png')
 
                 label_prefix = self.label_path + folder_name
@@ -112,6 +120,7 @@ class Models:
                 label = self.load_label([label_path])[0]
                 img_paths = [file_path + img for img in img_paths]
 
+                # compute iou on original image
                 original_results = self.inference([file_path + filenames[i]])
                 for j in range(len(original_results)):
                     original_results[j][0].gt_sem_seg = PixelData(data=label)
@@ -127,7 +136,7 @@ class Models:
                 models_results = self.inference(img_paths)
 
                 for j in range(len(models_results)):
-                    for k in range(top_k):
+                    for k in range(int(top_k * (top_k + 1) / 2)):
                         models_results[j][k].gt_sem_seg = PixelData(data=label)
 
                     metric = Metrics()
@@ -138,18 +147,46 @@ class Models:
                     )
                     metric.process([0] * top_k, [result.to_dict() for result in models_results[j]])
                     mutation_mIoU = metric.compute_iou(metric.results)
-                    print("metrics on model" + str(j + 1) + ":")
                     increment = compute_difference(original_IoU, mutation_mIoU)
+
+
+                    # print("metrics on model" + str(j + 1) + ":")
+                    # output = {
+                    #     'increment': {
+                    #         self.classes[x]: increment['increment'][x]
+                    #         for x in range(len(increment['increment']))
+                    #     },
+                    #     'increment_percentage': {
+                    #         self.classes[x]: increment['increment_percentage'][x] * 100
+                    #         for x in range(len(increment['increment_percentage']))
+                    #     }
+                    # }
+                    # print(output)
+
+                    for x in range(len(increment['increment'])):
+                        if np.isfinite(increment['increment'][x]) and np.isfinite(increment['increment_percentage'][x]):
+                            results0[j][x] += increment['increment'][x]
+                            results1[j][x] += increment['increment_percentage'][x]
+                            total[j][x] += 1
+
+            # average metrics in different city
+            with open(self.out_path, 'a') as f:
+                print("The avg metrics in folder " + folder_name + " is:")
+                f.write("The avg metrics in folder " + folder_name + " is:\n")
+                for i in range(len(self.models)):
+                    f.write("model" + str(i) + ":\n")
+                    avg_increment = [results0[i][x] / total[i][x] if total[i][x] != 0 else 0.0 for x in range(len(self.classes))]
+                    avg_increment_percentage = [results1[i][x] / total[i][x] if total[i][x] != 0 else 0.0 for x in range(len(self.classes))]
                     output = {
                         'increment': {
-                            self.classes[i]: increment['increment'][i]
-                            for i in range(len(increment['increment']))
+                            self.classes[x]: avg_increment[x]
+                            for x in range(len(avg_increment))
                         },
                         'increment_percentage': {
-                            self.classes[i]: increment['increment_percentage'][i] * 100
-                            for i in range(len(increment['increment_percentage']))
+                            self.classes[x]: avg_increment_percentage[x] * 100
+                            for x in range(len(avg_increment_percentage))
                         }
                     }
                     print(output)
-
+                    f.write(str(output) + '\n')
         return

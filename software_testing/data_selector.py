@@ -2,6 +2,7 @@ import os
 import numpy as np
 from mmengine.structures import PixelData
 from metrics import Metrics, compute_difference
+from fuzzer import Fuzzer
 import cv2
 
 
@@ -26,7 +27,7 @@ class DataSelector:
 
     def select(self, models):
         """
-
+        This works as a test executor and output analyzer
         Args:
             models: Model type which contains multiple or single model
 
@@ -110,9 +111,38 @@ class DataSelector:
                 cv2.imwrite(path, original_img)
 
                 votes = np.argsort(votes)[:self.top_k] + 1
+
+                cnt = 0
+                fuzzer = Fuzzer()
                 for j in range(self.top_k):
                     selected_img = cv2.imread(img_paths[votes[j]])
+
                     save_path = self.out_path + folder_name + '/' + \
                                 filenames[i][:-4] + '_' + \
-                                'mutation' + str(j) + '.png'
+                                'mutation' + str(cnt) + '.png'
                     cv2.imwrite(save_path, selected_img)
+                    cnt += 1
+
+                    # multiple mutation
+                    for k in range(j + 1, self.top_k):
+                        if votes[k] == 1:
+                            multi_mutation_img = fuzzer.add_fog([selected_img])[0]
+                        elif votes[k] == 2:
+                            multi_mutation_img = fuzzer.add_rain([selected_img])[0]
+                        elif votes[k] == 3:
+                            multi_mutation_img = fuzzer.add_snowlandscape([selected_img])[0]
+                        elif votes[k] == 4:
+                            multi_mutation_img = fuzzer.add_cloud([selected_img])[0]
+                        elif votes[k] == 5:
+                            multi_mutation_img = fuzzer.add_brightness([selected_img], 1.5)[0]
+                        elif votes[k] == 6:
+                            multi_mutation_img = fuzzer.gamma_transformation([selected_img], 0.5)[0]
+                        elif votes[k] == 7:
+                            multi_mutation_img = fuzzer.gamma_transformation([selected_img], 2.0)[0]
+
+                        save_path = self.out_path + folder_name + '/' + \
+                                    filenames[i][:-4] + '_' + \
+                                    'mutation' + str(cnt) + '.png'
+                        cv2.imwrite(save_path, multi_mutation_img)
+                        cnt += 1
+

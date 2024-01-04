@@ -1,4 +1,4 @@
-from fuzzing import Fuzzer
+from fuzzer import Fuzzer
 import numpy as np
 import os
 import cv2
@@ -23,7 +23,7 @@ class DataGenerator:
             file_path = self.data_path + folder_name
             filenames = os.listdir(file_path)
 
-            indices = np.random.randint(0, len(filenames), 30)
+            indices = np.random.randint(0, len(filenames), self.sample_per_folder)
             target_filenames = [file_path + '/' + filenames[index] for index in indices]
 
             for i in range(len(target_filenames)):
